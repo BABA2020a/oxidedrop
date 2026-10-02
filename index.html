@@ -4,42 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Oxide Drop MiniApp</title>
-    <script src="https://telegram.org"></script>
     <style>
         body {
-            font-family: 'Segoe UI', Roboto, sans-serif;
+            font-family: sans-serif;
             background-color: #0d0b14;
             color: #ffffff;
             margin: 0;
             padding: 15px;
             text-align: center;
-            -webkit-user-select: none;
         }
-        
         .header {
             background: linear-gradient(135deg, #181524, #221c38);
             padding: 20px;
             border-radius: 15px;
             border: 1px solid #3d2f5c;
             margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-
         h1 {
-            margin: 0 0 5px 0;
+            margin: 0;
             font-size: 24px;
             color: #b57cff;
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
-
         .balance {
             font-size: 18px;
             color: #ffd700;
-            font-weight: bold;
             margin-top: 10px;
+            font-weight: bold;
         }
-
         .case-card {
             background-color: #161224;
             border-radius: 16px;
@@ -47,79 +38,37 @@
             padding: 20px;
             margin: 20px auto;
             max-width: 300px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
         }
-
         .case-image {
-            width: 130px;
-            height: 130px;
-            background: radial-gradient(circle, #3d2275 0%, transparent 70%);
-            margin: 0 auto 15px auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             font-size: 50px;
-        }
-
-        .case-title {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .case-price {
-            color: #a3a3a3;
-            font-size: 14px;
             margin-bottom: 15px;
         }
-
         .btn-open {
             background: linear-gradient(90deg, #8a2be2, #4a00e0);
             color: white;
             border: none;
-            padding: 12px 30px;
+            padding: 15px 30px;
             font-size: 16px;
             font-weight: bold;
             border-radius: 25px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
             width: 80%;
+            cursor: pointer;
         }
-
-        .btn-open:active {
-            transform: scale(0.95);
-        }
-
         .win-alert {
             display: none;
-            color: #00ff66;
-            font-weight: bold;
             margin-top: 15px;
             font-size: 16px;
         }
-
-        /* Стиль секции инвентаря */
         .inventory-section {
             margin-top: 25px;
             text-align: left;
-            padding: 10px;
         }
-
-        .inventory-title {
-            font-size: 18px;
-            color: #b57cff;
-            margin-bottom: 10px;
-            font-weight: bold;
-            border-bottom: 1px solid #2a2245;
-            padding-bottom: 5px;
-        }
-
         .inventory-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 8px;
+            margin-top: 10px;
         }
-
         .inventory-slot {
             background-color: #161224;
             border: 1px solid #2a2245;
@@ -128,10 +77,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 11px;
             color: #a3a3a3;
-            padding: 4px;
             text-align: center;
+            padding: 4px;
         }
     </style>
 </head>
@@ -139,20 +88,19 @@
 
     <div class="header">
         <h1 id="username">OXIDE DROP</h1>
-        <div class="balance">🪙 Баланс: <span id="balance-val">5000</span> монет</div>
+        <div class="balance">🪙 Баланс: <span id="balance-val">5000</span> коинов</div>
     </div>
 
     <div class="case-card">
         <div class="case-image">📦</div>
-        <div class="case-title">Морозная Ярость</div>
-        <div class="case-price">Стоимость: 500 монет</div>
-        <button class="btn-open" onclick="openCase()">ОТКРЫТЬ КЕЙС</button>
+        <h2>Донатный Кейс</h2>
+        <p style="color: #a3a3a3;">Стоимость: 500 коинов</p>
+        <button class="btn-open" id="main-open-btn">ОТКРЫТЬ КЕЙС</button>
         <div class="win-alert" id="win-notification"></div>
     </div>
 
-    <!-- Наш новый инвентарь -->
     <div class="inventory-section">
-        <div class="inventory-title">🎒 Ваш Инвентарь</div>
+        <h3 style="color: #b57cff; margin: 0;">🎒 Ваш Инвентарь</h3>
         <div class="inventory-grid" id="inv-grid">
             <div class="inventory-slot">Пусто</div>
             <div class="inventory-slot">Пусто</div>
@@ -161,53 +109,42 @@
         </div>
     </div>
 
-        // Инициализация Telegram WebApp с защитой от сбоев
-        let username = "ИГРОК";
-        try {
-            const tg = window.Telegram.WebApp;
-            if (tg) {
-                tg.expand();
-                if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                    username = tg.initDataUnsafe.user.first_name.toUpperCase();
-                }
-            }
-        } catch(e) {
-            console.log("Telegram WebApp не запущен");
-        }
-        
-        document.getElementById('username').innerText = username + " DROP";
-
+    <!-- ТЕПЕРЬ КОД КРАСИВО ЗАПРЯТАН ВНУТРЬ СВОИХ ТЕГОВ SCRIPT И БУДЕТ РАБОТАТЬ ИДЕАЛЬНО -->
+    <script>
         let balance = 5000;
-        const prizeList = ["Скин Oxide #1", "Скин Oxide #2", "Скин Oxide #3", "Скин Oxide #4", "Скин Oxide #5"];
+        const prizeList = ["Скин Oxide #1", "Скин Oxide #2", "Скин Oxide #3", "Скин Oxide #4"];
         const playerInventory = [];
 
-        function openCase() {
+        // Попытка взять имя из Телеграма
+        try {
+            const tg = window.Telegram.WebApp;
+            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                document.getElementById('username').innerText = tg.initDataUnsafe.user.first_name.toUpperCase() + " DROP";
+                tg.expand();
+            }
+        } catch(e) {
+            console.log("WebApp открыт не в Телеграм");
+        }
+
+        document.getElementById('main-open-btn').addEventListener('click', function() {
             const winBlock = document.getElementById('win-notification');
             
-            // Проверка баланса без использования ломающегося alert()
             if (balance < 500) {
                 winBlock.style.display = "block";
-                winBlock.innerHTML = `<span style="color:#ff3333; font-size:16px;">❌ Недостаточно монет для открытия!</span>`;
+                winBlock.innerHTML = "<span style='color:#ff3333; font-weight:bold;'>❌ Недостаточно коинов!</span>";
                 return;
             }
 
-            // Отнимаем баланс
             balance -= 500;
             document.getElementById('balance-val').innerText = balance;
 
-            // Случайный скин
             const randomPrize = prizeList[Math.floor(Math.random() * prizeList.length)];
             
-            // Вывод приза на экран
             winBlock.style.display = "block";
             winBlock.innerHTML = `Выпало:<br><span style="color:#ffd700; font-size:18px; font-weight:bold;">${randomPrize}</span>`;
             
-            // Добавляем в инвентарь
             playerInventory.push(randomPrize);
-            updateInventoryUI();
-        }
-
-        function updateInventoryUI() {
+            
             const grid = document.getElementById('inv-grid');
             grid.innerHTML = ""; 
             
@@ -226,7 +163,7 @@
                 emptySlot.innerText = "Пусто";
                 grid.appendChild(emptySlot);
             }
-        }
+        });
     </script>
 </body>
 </html>
