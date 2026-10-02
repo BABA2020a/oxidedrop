@@ -12,6 +12,7 @@
             margin: 0;
             padding: 15px;
             text-align: center;
+            -webkit-user-select: none;
         }
         .header {
             background: linear-gradient(135deg, #181524, #221c38);
@@ -81,6 +82,35 @@
             color: #a3a3a3;
             text-align: center;
             padding: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .inventory-buttons {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .btn-danger {
+            background: linear-gradient(90deg, #d32f2f, #9a0007);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 10px rgba(211, 47, 47, 0.3);
+        }
+        .btn-danger-confirm {
+            background: linear-gradient(90deg, #ff1744, #b2032a);
+            display: none;
+        }
+        .inventory-slot.selected-to-delete {
+            border: 2px solid #ff1744 !important;
+            box-shadow: inset 0 0 10px rgba(255, 23, 68, 0.5);
+            transform: scale(0.95);
         }
     </style>
 </head>
@@ -100,22 +130,26 @@
     </div>
 
     <div class="inventory-section">
-        <h3 style="color: #b57cff; margin: 0;">🎒 Ваш Инвентарь</h3>
+        <h3 style="color: #b57cff; margin: 0;">🎒 Ваш Инвентарь <span id="mode-status" style="font-size:12px; color:#a3a3a3; margin-left:10px;"></span></h3>
         <div class="inventory-grid" id="inv-grid">
             <div class="inventory-slot">Пусто</div>
             <div class="inventory-slot">Пусто</div>
             <div class="inventory-slot">Пусто</div>
             <div class="inventory-slot">Пусто</div>
         </div>
+        <div class="inventory-buttons">
+            <button class="btn-danger" id="toggle-delete-mode-btn">🗑️ Выбрать скины для удаления</button>
+            <button class="btn-danger btn-danger-confirm" id="confirm-delete-btn">⚠️ Удалить выбранные скины</button>
+        </div>
     </div>
 
-    <!-- ТЕПЕРЬ КОД КРАСИВО ЗАПРЯТАН ВНУТРЬ СВОИХ ТЕГОВ SCRIPT И БУДЕТ РАБОТАТЬ ИДЕАЛЬНО -->
     <script>
         let balance = 5000;
         const prizeList = ["Скин Oxide #1", "Скин Oxide #2", "Скин Oxide #3", "Скин Oxide #4"];
-        const playerInventory = [];
+        let playerInventory = []; 
+        let selectedIndexesToDelete = []; 
+        let isDeleteMode = false; 
 
-        // Попытка взять имя из Телеграма
         try {
             const tg = window.Telegram.WebApp;
             if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
@@ -123,47 +157,105 @@
                 tg.expand();
             }
         } catch(e) {
-            console.log("WebApp открыт не в Телеграм");
+            console.log("WebApp не в ТГ");
         }
 
         document.getElementById('main-open-btn').addEventListener('click', function() {
+            if(isDeleteMode) toggleDeleteMode();
             const winBlock = document.getElementById('win-notification');
-            
             if (balance < 500) {
                 winBlock.style.display = "block";
                 winBlock.innerHTML = "<span style='color:#ff3333; font-weight:bold;'>❌ Недостаточно коинов!</span>";
                 return;
             }
-
             balance -= 500;
             document.getElementById('balance-val').innerText = balance;
-
             const randomPrize = prizeList[Math.floor(Math.random() * prizeList.length)];
-            
             winBlock.style.display = "block";
             winBlock.innerHTML = `Выпало:<br><span style="color:#ffd700; font-size:18px; font-weight:bold;">${randomPrize}</span>`;
-            
-            playerInventory.push(randomPrize);
-            
+            playerInventory.push({ name: randomPrize });
+            updateInventoryUI();
+        });
+
+        document.getElementById('toggle-delete-mode-btn').addEventListener('click', toggleDeleteMode);
+
+        function toggleDeleteMode() {
+            if (playerInventory.length === 0) {
+                alert("Ваш инвентарь пуст! Нечего удалять.");
+                return;
+            }
+            isDeleteMode = !isDeleteMode;
+            selectedIndexesToDelete = []; 
+            const mainBtn = document.getElementById('toggle-delete-mode-btn');
+            const confirmBtn = document.getElementById('confirm-delete-btn');
+            const statusText = document.getElementById('mode-status');
+            if (isDeleteMode) {
+                mainBtn.innerText = "↩️ Отменить удаление";
+                statusText.innerText = "(Выберите предметы кликом)";
+                statusText.style.color = "#ff1744";
+            } else {
+                mainBtn.innerText = "🗑️ Выбрать скины для удаления";
+                confirmBtn.style.display = "none";
+                statusText.innerText = "";
+            }
+            updateInventoryUI();
+        }
+
+        function handleSlotClick(index) {
+            if (!isDeleteMode) return; 
+            const itemPos = selectedIndexesToDelete.indexOf(index);
+            if (itemPos > -1) {
+                selectedIndexesToDelete.splice(itemPos, 1);
+            } else {
+                selectedIndexesToDelete.push(index);
+            }
+            const confirmBtn = document.getElementById('confirm-delete-btn');
+            if (selectedIndexesToDelete.length > 0) {
+                confirmBtn.style.display = "block";
+                confirmBtn.innerText = `⚠️ Удалить выбранные скины (${selectedIndexesToDelete.length} шт.)`;
+            } else {
+                confirmBtn.style.display = "none";
+            }
+            updateInventoryUI();
+        }
+
+        document.getElementById('confirm-delete-btn').addEventListener('click', function() {
+            if (selectedIndexesToDelete.length === 0) return;
+            const isConfirmed = confirm(`Вы уверены, что хотите навсегда удалить выбранные скины (${selectedIndexesToDelete.length} шт.)?`);
+            if (isConfirmed) {
+                playerInventory = playerInventory.filter((item, index) => !selectedIndexesToDelete.includes(index));
+                isDeleteMode = false;
+                selectedIndexesToDelete = [];
+                document.getElementById('toggle-delete-mode-btn').innerText = "🗑️ Выбрать скины для удаления";
+                document.getElementById('confirm-delete-btn').style.display = "none";
+                document.getElementById('mode-status').innerText = "";
+                updateInventoryUI();
+            }
+        });
+
+        function updateInventoryUI() {
             const grid = document.getElementById('inv-grid');
             grid.innerHTML = ""; 
-            
-            playerInventory.forEach(item => {
+            playerInventory.forEach((item, index) => {
                 const slot = document.createElement('div');
                 slot.className = "inventory-slot";
-                slot.style.border = "1px solid #8a2be2"; 
-                slot.style.color = "#ffffff";
-                slot.innerText = item;
+                if (isDeleteMode && selectedIndexesToDelete.includes(index)) {
+                    slot.className += " selected-to-delete";
+                } else {
+                    slot.style.border = "1px solid #8a2be2"; 
+                    slot.style.color = "#ffffff";
+                }
+                slot.innerText = item.name;
+                slot.onclick = function() { handleSlotClick(index); };
                 grid.appendChild(slot);
             });
-            
             while(grid.children.length < 4) {
                 const emptySlot = document.createElement('div');
                 emptySlot.className = "inventory-slot";
                 emptySlot.innerText = "Пусто";
                 grid.appendChild(emptySlot);
             }
-        });
+        }
     </script>
 </body>
 </html>
