@@ -161,54 +161,65 @@
         </div>
     </div>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        if (tg) {
-            tg.expand();
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                document.getElementById('username').innerText = tg.initDataUnsafe.user.first_name.toUpperCase() + " DROP";
+        // Инициализация Telegram WebApp с защитой от сбоев
+        let username = "ИГРОК";
+        try {
+            const tg = window.Telegram.WebApp;
+            if (tg) {
+                tg.expand();
+                if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                    username = tg.initDataUnsafe.user.first_name.toUpperCase();
+                }
             }
+        } catch(e) {
+            console.log("Telegram WebApp не запущен");
         }
+        
+        document.getElementById('username').innerText = username + " DROP";
 
         let balance = 5000;
-        // Пока мы ждем реальные названия скинов из Oxide, поставим просто временные номера
         const prizeList = ["Скин Oxide #1", "Скин Oxide #2", "Скин Oxide #3", "Скин Oxide #4", "Скин Oxide #5"];
         const playerInventory = [];
 
         function openCase() {
+            const winBlock = document.getElementById('win-notification');
+            
+            // Проверка баланса без использования ломающегося alert()
             if (balance < 500) {
-                alert("Недостаточно монет!");
+                winBlock.style.display = "block";
+                winBlock.innerHTML = `<span style="color:#ff3333; font-size:16px;">❌ Недостаточно монет для открытия!</span>`;
                 return;
             }
 
+            // Отнимаем баланс
             balance -= 500;
             document.getElementById('balance-val').innerText = balance;
 
+            // Случайный скин
             const randomPrize = prizeList[Math.floor(Math.random() * prizeList.length)];
             
-            const winBlock = document.getElementById('win-notification');
+            // Вывод приза на экран
             winBlock.style.display = "block";
-            winBlock.innerHTML = `Выпало:<br><span style="color:#ffd700; font-size:18px;">${randomPrize}</span>`;
+            winBlock.innerHTML = `Выпало:<br><span style="color:#ffd700; font-size:18px; font-weight:bold;">${randomPrize}</span>`;
             
-            // Добавляем предмет в массив инвентаря
+            // Добавляем в инвентарь
             playerInventory.push(randomPrize);
             updateInventoryUI();
         }
 
         function updateInventoryUI() {
             const grid = document.getElementById('inv-grid');
-            grid.innerHTML = ""; // Очищаем старые слоты
+            grid.innerHTML = ""; 
             
-            // Отрисовываем новые выбитые предметы
             playerInventory.forEach(item => {
                 const slot = document.createElement('div');
                 slot.className = "inventory-slot";
-                slot.style.border = "1px solid #8a2be2"; // Подсветим фиолетовым выбитый скин
+                slot.style.border = "1px solid #8a2be2"; 
+                slot.style.color = "#ffffff";
                 slot.innerText = item;
                 grid.appendChild(slot);
             });
             
-            // Добиваем инвентарь пустыми слотами до 4 штук для красоты
             while(grid.children.length < 4) {
                 const emptySlot = document.createElement('div');
                 emptySlot.className = "inventory-slot";
