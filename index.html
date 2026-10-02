@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <title>Oxide Drop MiniApp</title>
     <style>
         * { box-sizing: border-box; }
@@ -353,7 +354,7 @@
             const user = tg.initDataUnsafe && tg.initDataUnsafe.user;
 
             if (user) {
-                const displayName = user.username ? "@" + user.username : user.first_name;
+                const displayName = user.username ? "@" + user.username : "Username не указан";
                 document.getElementById('username').innerText =
                     (user.first_name || "Игрок").toUpperCase() + " DROP";
 
