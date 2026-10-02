@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oxide Drop MiniApp</title>
+    <!-- Подключаем официальный скрипт Telegram WebApp -->
+    <script src="https://telegram.org"></script>
+    <style>
+        /* Стильный темный дизайн в фиолетовых тонах */
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: #0d0b14;
+            color: #ffffff;
+            margin: 0;
+            padding: 15px;
+            text-align: center;
+            -webkit-user-select: none;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #181524, #221c38);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #3d2f5c;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        h1 {
+            margin: 0 0 5px 0;
+            font-size: 24px;
+            color: #b57cff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .balance {
+            font-size: 18px;
+            color: #ffd700;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        /* Карточка кейса */
+        .case-card {
+            background-color: #161224;
+            border-radius: 16px;
+            border: 2px solid #2a2245;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 300px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        }
+
+        .case-image {
+            width: 130px;
+            height: 130px;
+            background: radial-gradient(circle, #3d2275 0%, transparent 70%);
+            margin: 0 auto 15px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+        }
+
+        .case-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .case-price {
+            color: #a3a3a3;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        /* Кнопка открытия */
+        .btn-open {
+            background: linear-gradient(90deg, #8a2be2, #4a00e0);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+            transition: 0.2s;
+            width: 80%;
+        }
+
+        .btn-open:active {
+            transform: scale(0.95);
+            background: linear-gradient(90deg, #4a00e0, #8a2be2);
+        }
+
+        /* Всплывающее окно с призом */
+        .win-alert {
+            display: none;
+            color: #00ff66;
+            font-weight: bold;
+            margin-top: 15px;
+            font-size: 16px;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1 id="username">OXIDE DROP</h1>
+        <div class="balance">🪙 Баланс: <span id="balance-val">5000</span> монет</div>
+    </div>
+
+    <!-- Блок кейса МОРОЗНАЯ ЯРОСТЬ -->
+    <div class="case-card">
+        <div class="case-image">📦</div>
+        <div class="case-title">Морозная Ярость</div>
+        <div class="case-price">Стоимость: 500 монет</div>
+        <button class="btn-open" onclick="openCase()">ОТКРЫТЬ КЕЙС</button>
+        <div class="win-alert" id="win-notification"></div>
+    </div>
+
+    <script>
+        // Инициализируем Telegram WebApp, чтобы страница знала имя игрока
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Расширяем окно на весь экран телефона
+
+        // Если открыли через Telegram, подставим имя игрока
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            document.getElementById('username').innerText = tg.initDataUnsafe.user.first_name.toUpperCase() + " DROP";
+        }
+
+        let balance = 5000;
+        const prizeList = ["🔫 АК-47 | Азимов", "🔪 Нож-бабочка | Градиент", "🔫 M4A4 | Вой", "🪙 1000 бонусных монет", "💥 Осколочная граната"];
+
+        function openCase() {
+            if (balance < 500) {
+                alert("Недостаточно монет!");
+                return;
+            }
+
+            // Отнимаем стоимость кейса
+            balance -= 500;
+            document.getElementById('balance-val').innerText = balance;
+
+            // Выбираем случайный приз
+            const randomPrize = prizeList[Math.floor(Math.random() * prizeList.length)];
+            
+            // Показываем красивое уведомление о выигрыше
+            const winBlock = document.getElementById('win-notification');
+            winBlock.style.display = "block";
+            winBlock.innerHTML = `Вы выиграли:<br><span style="color:#fff; font-size:18px;">${randomPrize}</span>`;
+            
+            // Вызываем легкую вибрацию на телефоне (если поддерживает устройство)
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+        }
+    </script>
+</body>
+</html>
