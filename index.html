@@ -4,10 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Oxide Drop MiniApp</title>
-    <!-- Подключаем официальный скрипт Telegram WebApp -->
     <script src="https://telegram.org"></script>
     <style>
-        /* Стильный темный дизайн в фиолетовых тонах */
         body {
             font-family: 'Segoe UI', Roboto, sans-serif;
             background-color: #0d0b14;
@@ -42,7 +40,6 @@
             margin-top: 10px;
         }
 
-        /* Карточка кейса */
         .case-card {
             background-color: #161224;
             border-radius: 16px;
@@ -76,7 +73,6 @@
             margin-bottom: 15px;
         }
 
-        /* Кнопка открытия */
         .btn-open {
             background: linear-gradient(90deg, #8a2be2, #4a00e0);
             color: white;
@@ -87,28 +83,55 @@
             border-radius: 25px;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
-            transition: 0.2s;
             width: 80%;
         }
 
         .btn-open:active {
             transform: scale(0.95);
-            background: linear-gradient(90deg, #4a00e0, #8a2be2);
         }
 
-        /* Всплывающее окно с призом */
         .win-alert {
             display: none;
             color: #00ff66;
             font-weight: bold;
             margin-top: 15px;
             font-size: 16px;
-            animation: fadeIn 0.3s;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* Стиль секции инвентаря */
+        .inventory-section {
+            margin-top: 25px;
+            text-align: left;
+            padding: 10px;
+        }
+
+        .inventory-title {
+            font-size: 18px;
+            color: #b57cff;
+            margin-bottom: 10px;
+            font-weight: bold;
+            border-bottom: 1px solid #2a2245;
+            padding-bottom: 5px;
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .inventory-slot {
+            background-color: #161224;
+            border: 1px solid #2a2245;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #a3a3a3;
+            padding: 4px;
+            text-align: center;
         }
     </style>
 </head>
@@ -119,7 +142,6 @@
         <div class="balance">🪙 Баланс: <span id="balance-val">5000</span> монет</div>
     </div>
 
-    <!-- Блок кейса МОРОЗНАЯ ЯРОСТЬ -->
     <div class="case-card">
         <div class="case-image">📦</div>
         <div class="case-title">Морозная Ярость</div>
@@ -128,18 +150,30 @@
         <div class="win-alert" id="win-notification"></div>
     </div>
 
-    <script>
-        // Инициализируем Telegram WebApp, чтобы страница знала имя игрока
-        const tg = window.Telegram.WebApp;
-        tg.expand(); // Расширяем окно на весь экран телефона
+    <!-- Наш новый инвентарь -->
+    <div class="inventory-section">
+        <div class="inventory-title">🎒 Ваш Инвентарь</div>
+        <div class="inventory-grid" id="inv-grid">
+            <div class="inventory-slot">Пусто</div>
+            <div class="inventory-slot">Пусто</div>
+            <div class="inventory-slot">Пусто</div>
+            <div class="inventory-slot">Пусто</div>
+        </div>
+    </div>
 
-        // Если открыли через Telegram, подставим имя игрока
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            document.getElementById('username').innerText = tg.initDataUnsafe.user.first_name.toUpperCase() + " DROP";
+    <script>
+        const tg = window.Telegram.WebApp;
+        if (tg) {
+            tg.expand();
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                document.getElementById('username').innerText = tg.initDataUnsafe.user.first_name.toUpperCase() + " DROP";
+            }
         }
 
         let balance = 5000;
-        const prizeList = ["🔫 АК-47 | Азимов", "🔪 Нож-бабочка | Градиент", "🔫 M4A4 | Вой", "🪙 1000 бонусных монет", "💥 Осколочная граната"];
+        // Пока мы ждем реальные названия скинов из Oxide, поставим просто временные номера
+        const prizeList = ["Скин Oxide #1", "Скин Oxide #2", "Скин Oxide #3", "Скин Oxide #4", "Скин Oxide #5"];
+        const playerInventory = [];
 
         function openCase() {
             if (balance < 500) {
@@ -147,21 +181,39 @@
                 return;
             }
 
-            // Отнимаем стоимость кейса
             balance -= 500;
             document.getElementById('balance-val').innerText = balance;
 
-            // Выбираем случайный приз
             const randomPrize = prizeList[Math.floor(Math.random() * prizeList.length)];
             
-            // Показываем красивое уведомление о выигрыше
             const winBlock = document.getElementById('win-notification');
             winBlock.style.display = "block";
-            winBlock.innerHTML = `Вы выиграли:<br><span style="color:#fff; font-size:18px;">${randomPrize}</span>`;
+            winBlock.innerHTML = `Выпало:<br><span style="color:#ffd700; font-size:18px;">${randomPrize}</span>`;
             
-            // Вызываем легкую вибрацию на телефоне (если поддерживает устройство)
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred('success');
+            // Добавляем предмет в массив инвентаря
+            playerInventory.push(randomPrize);
+            updateInventoryUI();
+        }
+
+        function updateInventoryUI() {
+            const grid = document.getElementById('inv-grid');
+            grid.innerHTML = ""; // Очищаем старые слоты
+            
+            // Отрисовываем новые выбитые предметы
+            playerInventory.forEach(item => {
+                const slot = document.createElement('div');
+                slot.className = "inventory-slot";
+                slot.style.border = "1px solid #8a2be2"; // Подсветим фиолетовым выбитый скин
+                slot.innerText = item;
+                grid.appendChild(slot);
+            });
+            
+            // Добиваем инвентарь пустыми слотами до 4 штук для красоты
+            while(grid.children.length < 4) {
+                const emptySlot = document.createElement('div');
+                emptySlot.className = "inventory-slot";
+                emptySlot.innerText = "Пусто";
+                grid.appendChild(emptySlot);
             }
         }
     </script>
