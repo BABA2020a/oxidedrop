@@ -132,7 +132,7 @@ def cors(data, status=200):
         headers={
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Headers": "Content-Type, X-Telegram-Init-Data",
-            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         },
     )
 
@@ -166,13 +166,85 @@ async def api_player(request):
     })
 
 
+
+async def api_save_player(request):
+    init_data = request.headers.get("X-Telegram-Init-Data", "")
+    user = validate_telegram_init_data(init_data)
+
+    if user is None:
+        return cors({
+            "ok": False,
+            "error": "INVALID_TELEGRAM_DATA",
+        }, 401)
+
+    try:
+        body = await request.json()
+
+        balance = int(body.get("balance", 0))
+        total_cases_opened = int(body.get("total_cases_opened", 0))
+        inventory = body.get("inventory", [])
+
+        if balance < 0 or total_cases_opened < 0:
+            raise ValueError("negative values")
+
+        if not isinstance(inventory, list):
+            raise ValueError("inventory must be a list")
+
+        clean_inventory = []
+        for item in inventory:
+            if isinstance(item, dict) and isinstance(item.get("name"), str):
+                clean_inventory.append({
+                    "name": item["name"][:100]
+                })
+            elif isinstance(item, str):
+                clean_inventory.append({
+                    "name": item[:100]
+                })
+
+        with psycopg.connect(DATABASE_URL) as conn:
+            conn.execute("""
+                UPDATE players
+                SET balance = %s,
+                    total_cases_opened = %s,
+                    inventory = %s::jsonb,
+                    updated_at = NOW()
+                WHERE telegram_id = %s
+            """, (
+                balance,
+                total_cases_opened,
+                json.dumps(clean_inventory, ensure_ascii=False),
+                user["id"],
+            ))
+            conn.commit()
+
+        player = get_or_create_player(user)
+
+        return cors({
+            "ok": True,
+            "player": player,
+        })
+
+    except (ValueError, TypeError, json.JSONDecodeError):
+        return cors({
+            "ok": False,
+            "error": "INVALID_PLAYER_DATA",
+        }, 400)
+    except Exception:
+        return cors({
+            "ok": False,
+            "error": "DATABASE_ERROR",
+        }, 500)
+
+
 def create_app():
     app = web.Application()
 
     app.router.add_get("/health", health)
 
     app.router.add_get("/api/player", api_player)
+    app.router.add_post("/api/save-player", api_save_player)
     app.router.add_options("/api/player", options)
+    app.router.add_options("/api/save-player", options)
 
     return app
 
@@ -195,3 +267,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+            
