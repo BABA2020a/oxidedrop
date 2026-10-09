@@ -82,28 +82,34 @@
             text-align: left;
         }
 
-        .inventory-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin-top: 10px;
-        }
+        
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+    width: 100%;
+}
 
-        .inventory-slot {
-            background-color: #161224;
-            border: 1px solid #2a2245;
-            aspect-ratio: 1;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            color: #a3a3a3;
-            text-align: center;
-            padding: 4px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+.inventory-slot {
+    min-width: 0;
+    width: 100%;
+    aspect-ratio: 1;
+    overflow: hidden;
+    background-color: #161224;
+    border: 1px solid #2a2245;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #a3a3a3;
+    text-align: center;
+    padding: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
 
         .inventory-buttons {
             margin-top: 15px;
