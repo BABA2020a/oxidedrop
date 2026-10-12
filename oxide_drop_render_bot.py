@@ -32,7 +32,7 @@ async def start_cmd(message: types.Message):
         )
     ]])
     await message.answer(
-        f"Привет, {name}!\\n\\n<b>OXIDE DROP</b>\\nОткрывай кейсы и собирай арсенал!",
+        f"Привет, {name}!\n\n<b>OXIDE DROP</b>\nОткрывай кейсы и собирай арсенал!",
         reply_markup=keyboard,
         parse_mode="HTML",
     )
